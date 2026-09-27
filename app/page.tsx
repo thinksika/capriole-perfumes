@@ -137,16 +137,18 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* 4. FEATURED / BESTSELLERS */}
-      <section style={{ padding: '5.5rem 0', background: '#070707', borderTop: '1px solid #1c1c1c' }}>
-        <div className="container">
-          <div style={{ marginBottom: '2.5rem' }}>
-            <div style={{ fontSize: '0.55rem', letterSpacing: '0.25em', color: '#B8973A', marginBottom: '0.5rem', fontFamily: 'DM Sans, sans-serif' }}>MOST LOVED</div>
-            <h2 style={{ fontFamily: 'Playfair Display, Georgia, serif', fontSize: 'clamp(1.75rem, 3.5vw, 2.75rem)', color: '#F0EBE0', fontWeight: 400 }}>BESTSELLERS</h2>
+      {/* 4. FEATURED / BESTSELLERS (Rendered only when distinct bestseller data exists) */}
+      {bestsellers.length > 0 && bestsellers.length < allProducts.length && (
+        <section style={{ padding: '5.5rem 0', background: '#070707', borderTop: '1px solid #1c1c1c' }}>
+          <div className="container">
+            <div style={{ marginBottom: '2.5rem' }}>
+              <div style={{ fontSize: '0.55rem', letterSpacing: '0.25em', color: '#B8973A', marginBottom: '0.5rem', fontFamily: 'DM Sans, sans-serif' }}>MOST LOVED</div>
+              <h2 style={{ fontFamily: 'Playfair Display, Georgia, serif', fontSize: 'clamp(1.75rem, 3.5vw, 2.75rem)', color: '#F0EBE0', fontWeight: 400 }}>BESTSELLERS</h2>
+            </div>
+            <ProductGrid products={bestsellers} columns={3} />
           </div>
-          <ProductGrid products={bestsellers.length ? bestsellers : allProducts} columns={3} />
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* 5. DISCOVER YOUR SCENT */}
       <section style={{ padding: '5rem 0', background: '#0d0d0d', borderTop: '1px solid #1c1c1c' }}>
