@@ -52,19 +52,21 @@ export default function ProductGrid({ products, loading, onQuickView, columns = 
       ))}
       <style>{`
         @media (max-width: 1024px) {
-          div[style*="grid-template-columns: repeat(3"] {
-            grid-template-columns: repeat(2, 1fr) !important;
+          div[style*="grid-template-columns"] {
+            grid-template-columns: repeat(3, 1fr) !important;
+            gap: 1.5rem !important;
           }
         }
-        @media (max-width: 640px) {
+        @media (max-width: 768px) {
           div[style*="grid-template-columns"] {
             grid-template-columns: repeat(2, 1fr) !important;
             gap: 1rem !important;
           }
         }
-        @media (max-width: 360px) {
+        @media (max-width: 480px) {
           div[style*="grid-template-columns"] {
-            grid-template-columns: 1fr !important;
+            grid-template-columns: repeat(2, 1fr) !important;
+            gap: 0.75rem !important;
           }
         }
       `}</style>

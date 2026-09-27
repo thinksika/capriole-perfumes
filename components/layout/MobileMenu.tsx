@@ -16,7 +16,6 @@ const navItems = [
   { label: 'DISCOVER YOUR SCENT', href: '/discover' },
   { label: 'SAMPLES', href: '/samples' },
   { label: 'ABOUT', href: '/about' },
-  { label: 'JOURNAL', href: '/journal' },
   { label: 'VISIT', href: '/visit' },
   { label: 'CONTACT', href: '/contact' },
 ]

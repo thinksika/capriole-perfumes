@@ -14,7 +14,7 @@ const infoLinks = [
   { label: 'Discover Your Scent', href: '/discover' },
   { label: 'Fragrance Index', href: '/fragrance-index' },
   { label: 'About', href: '/about' },
-  { label: 'Journal', href: '/journal' },
+  { label: 'Visit Us', href: '/visit' },
 ]
 
 const careLinks = [
