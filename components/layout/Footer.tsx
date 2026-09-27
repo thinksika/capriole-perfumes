@@ -103,7 +103,7 @@ export default function Footer() {
             <div style={{ fontSize: '0.625rem', letterSpacing: '0.22em', color: '#B8973A', marginBottom: '0.75rem', fontFamily: 'DM Sans, sans-serif', textTransform: 'uppercase' }}>VISIT THE HOUSE</div>
             <h3 style={{ fontFamily: 'Playfair Display, Georgia, serif', fontSize: '1.5rem', color: '#F0EBE0', marginBottom: '0.5rem', fontWeight: 400 }}>Adabraka, Accra, Ghana</h3>
             <p style={{ fontSize: '0.8125rem', color: '#7A7570', maxWidth: 420, fontFamily: 'DM Sans, sans-serif' }}>
-              Discover Capriole in person or speak with us directly.
+              Adabraka, Accra, Ghana
             </p>
           </div>
           <div style={{ display: 'flex', gap: '1.5rem', flexWrap: 'wrap', alignItems: 'center' }}>

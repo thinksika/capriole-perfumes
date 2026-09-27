@@ -59,7 +59,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         />
       </head>
       <body style={{ background: '#070707' }}>
-        <Header transparent={false} />
+        <Header transparent={true} />
         <CartDrawer />
         <main style={{ paddingTop: 64 }}>{children}</main>
         <Footer />

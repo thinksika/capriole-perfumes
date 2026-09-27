@@ -6,8 +6,8 @@ const categories = [
   { name: 'OUD', image: '/images/collections/oud.png', href: '/collections/oud' },
   { name: 'MUSK & AMBER', image: '/images/collections/musk-amber.png', href: '/collections/musk-amber' },
   { name: 'FLORAL', image: '/images/collections/floral.png', href: '/collections/floral' },
-  { name: 'WOODY', image: '/images/editorial/about-hero.png', href: '/collections/woody' },
-  { name: 'FRESH', image: '/images/editorial/hero.png', href: '/collections/fresh-citrus' },
+  { name: 'WOODY', image: '/images/collections/oud.png', href: '/collections/woody' },
+  { name: 'FRESH', image: '/images/collections/floral.png', href: '/collections/fresh-citrus' },
   { name: 'SWEET', image: '/images/collections/musk-amber.png', href: '/collections/sweet-gourmand' },
 ]
 

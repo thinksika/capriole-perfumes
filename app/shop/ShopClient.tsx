@@ -173,7 +173,7 @@ export default function ShopClient({ products, initialFilters }: ShopClientProps
 
       {/* Category Tabs + Search Bar */}
       <div style={{ borderBottom: '1px solid #1c1c1c', background: '#0a0a0a' }}>
-        <div className="container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem', padding: '1rem 0' }}>
+        <div className="container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem', paddingTop: '1rem', paddingBottom: '1rem' }}>
           {/* Tabs */}
           <div style={{ display: 'flex', gap: '0.5rem', overflowX: 'auto', paddingBottom: '0.25rem', scrollbarWidth: 'none' }} className="category-tabs">
             {CATEGORY_TABS.map(tab => {
@@ -235,7 +235,7 @@ export default function ShopClient({ products, initialFilters }: ShopClientProps
       </div>
 
       {/* Main Content Area */}
-      <div className="container" style={{ padding: '2.5rem 0 5rem' }}>
+      <div className="container" style={{ paddingTop: '2.5rem', paddingBottom: '5rem' }}>
         {/* Mobile filter bar */}
         <div style={{ display: 'none', borderBottom: '1px solid #1c1c1c', paddingBottom: '1.5rem', marginBottom: '2rem' }} id="mobile-filter-bar">
           <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
