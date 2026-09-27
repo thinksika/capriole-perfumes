@@ -12,7 +12,6 @@ const shopLinks = [
 const infoLinks = [
   { label: 'Collections', href: '/collections' },
   { label: 'Discover Your Scent', href: '/discover' },
-  { label: 'Fragrance Index', href: '/fragrance-index' },
   { label: 'About', href: '/about' },
   { label: 'Visit Us', href: '/visit' },
 ]

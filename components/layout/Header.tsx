@@ -29,7 +29,6 @@ const collectionsLinks = [
 
 const discoverLinks = [
   { label: 'Discover Your Scent', href: '/discover' },
-  { label: 'Fragrance Index', href: '/fragrance-index' },
   { label: 'Samples', href: '/samples' },
 ]
 
