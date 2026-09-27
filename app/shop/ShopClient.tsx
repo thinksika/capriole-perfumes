@@ -1,24 +1,29 @@
 'use client'
 import { useState, useMemo } from 'react'
 import Link from 'next/link'
-import { SlidersHorizontal, X, Search } from 'lucide-react'
+import { SlidersHorizontal, X, Search, ChevronDown } from 'lucide-react'
 import ProductGrid from '@/components/product/ProductGrid'
 import { Product } from '@/lib/products/types'
 import { searchProducts } from '@/lib/search/searchProducts'
 
-const CATEGORY_TABS = [
-  { id: 'all', label: 'ALL' },
-  { id: 'women', label: 'WOMEN', filter: { gender: 'women' } },
-  { id: 'men', label: 'MEN', filter: { gender: 'men' } },
-  { id: 'unisex', label: 'UNISEX', filter: { gender: 'unisex' } },
-  { id: 'edp', label: 'EDP', filter: { concentration: 'Eau de Parfum' } },
-  { id: 'extrait', label: 'EXTRAIT', filter: { concentration: 'Extrait' } },
-  { id: 'samples', label: 'SAMPLES', filter: { isSample: true } },
-]
+/* ─── derive available filter values from real product data ─── */
+function getAvailableFilters(products: Product[]) {
+  const genders = [...new Set(products.map(p => p.gender).filter(Boolean))] as string[]
+  const families = [...new Set(products.map(p => p.fragranceFamily).filter(Boolean))] as string[]
+  const concentrations = [...new Set(products.map(p => p.concentration).filter(Boolean))] as string[]
+  return { genders, families, concentrations }
+}
 
-const FAMILIES = ['Floral', 'Woody', 'Oud', 'Musk', 'Amber', 'Fresh', 'Sweet']
-const GENDERS = ['Women', 'Men', 'Unisex']
-const CONCENTRATIONS = ['Eau de Parfum', 'Extrait de Parfum']
+/* ─── sort helper ─── */
+function applySorting(products: Product[], sort: string): Product[] {
+  if (sort === 'price_asc')  return [...products].sort((a, b) => a.price - b.price)
+  if (sort === 'price_desc') return [...products].sort((a, b) => b.price - a.price)
+  if (sort === 'newest')     return [...products].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+  return products // featured = default order
+}
+
+/* ─── capitalise helper ─── */
+const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1)
 
 interface ShopClientProps {
   products: Product[]
@@ -26,175 +31,141 @@ interface ShopClientProps {
     gender?: string
     family?: string
     concentration?: string
-    featured?: boolean
-    newArrival?: boolean
-    bestSeller?: boolean
   }
 }
 
 export default function ShopClient({ products, initialFilters }: ShopClientProps) {
-  const [activeTab, setActiveTab] = useState('all')
-  const [searchQuery, setSearchQuery] = useState('')
-  const [filters, setFilters] = useState({
-    gender: initialFilters?.gender || '',
-    family: initialFilters?.family || '',
-    concentration: initialFilters?.concentration || '',
-    featured: initialFilters?.featured || false,
-    newArrival: initialFilters?.newArrival || false,
-    bestSeller: initialFilters?.bestSeller || false,
-  })
-  const [sort, setSort] = useState('featured')
+  const available = useMemo(() => getAvailableFilters(products), [products])
+
+  const [search, setSearch]       = useState('')
+  const [gender, setGender]       = useState(initialFilters?.gender       || '')
+  const [family, setFamily]       = useState(initialFilters?.family       || '')
+  const [conc, setConc]           = useState(initialFilters?.concentration || '')
+  const [sort, setSort]           = useState('featured')
   const [filterOpen, setFilterOpen] = useState(false)
 
-  // Combined tab + drawer filter logic
+  const hasActiveFilters = !!(gender || family || conc || search)
+
   const filtered = useMemo(() => {
-    let base = searchProducts(products, {
-      query: searchQuery.trim() || undefined,
-      gender: filters.gender || (activeTab === 'women' ? 'women' : activeTab === 'men' ? 'men' : activeTab === 'unisex' ? 'unisex' : undefined),
-      family: filters.family || undefined,
-      concentration: filters.concentration || (activeTab === 'edp' ? 'Eau de Parfum' : activeTab === 'extrait' ? 'Extrait' : undefined),
-      featured: filters.featured || undefined,
-      newArrival: filters.newArrival || undefined,
-      bestSeller: filters.bestSeller || undefined,
+    const base = searchProducts(products, {
+      query:         search.trim() || undefined,
+      gender:        gender        || undefined,
+      family:        family        || undefined,
+      concentration: conc          || undefined,
     })
+    return applySorting(base, sort)
+  }, [products, search, gender, family, conc, sort])
 
-    if (activeTab === 'samples') {
-      base = base.filter(p => p.sampleAvailable || p.slug.includes('sample'))
-    }
+  const clearAll = () => { setSearch(''); setGender(''); setFamily(''); setConc('') }
 
-    if (sort === 'price_asc') base = [...base].sort((a, b) => a.price - b.price)
-    else if (sort === 'price_desc') base = [...base].sort((a, b) => b.price - a.price)
-    else if (sort === 'newest') base = [...base].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-    
-    return base
-  }, [products, searchQuery, activeTab, filters, sort])
+  /* column count: 3 when ≤4 products, 4 otherwise */
+  const cols = filtered.length <= 4 ? 3 : 4
 
-  const clearAllFilters = () => {
-    setActiveTab('all')
-    setSearchQuery('')
-    setFilters({
-      gender: '',
-      family: '',
-      concentration: '',
-      featured: false,
-      newArrival: false,
-      bestSeller: false,
-    })
-  }
-
-  const FilterContent = () => (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+  /* ── reusable filter panel content ── */
+  const FilterPanel = () => (
+    <div className="shop-filter-panel">
       {/* Gender */}
-      <div>
-        <div style={{ fontSize: '0.55rem', letterSpacing: '0.22em', color: '#B8973A', marginBottom: '1rem', fontFamily: 'DM Sans, sans-serif' }}>GENDER</div>
-        {GENDERS.map(g => (
-          <button
-            key={g}
-            onClick={() => setFilters(f => ({ ...f, gender: f.gender === g.toLowerCase() ? '' : g.toLowerCase() }))}
-            style={{
-              display: 'flex', width: '100%', alignItems: 'center', gap: '0.5rem',
-              background: 'none', border: 'none', cursor: 'pointer', padding: '0.4rem 0',
-              fontSize: '0.8rem', color: filters.gender === g.toLowerCase() ? '#B8973A' : '#7A7570',
-              transition: 'color 0.15s', fontFamily: 'DM Sans, sans-serif'
-            }}
-          >
-            <span style={{ width: 14, height: 14, border: `1px solid ${filters.gender === g.toLowerCase() ? '#B8973A' : '#252525'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: '0.6rem', color: '#B8973A' }}>
-              {filters.gender === g.toLowerCase() ? '✓' : ''}
-            </span>
-            {g}
-          </button>
-        ))}
-      </div>
-      {/* Family */}
-      <div>
-        <div style={{ fontSize: '0.55rem', letterSpacing: '0.22em', color: '#B8973A', marginBottom: '1rem', fontFamily: 'DM Sans, sans-serif' }}>FRAGRANCE FAMILY</div>
-        {FAMILIES.map(f => (
-          <button
-            key={f}
-            onClick={() => setFilters(prev => ({ ...prev, family: prev.family === f ? '' : f }))}
-            style={{
-              display: 'flex', width: '100%', alignItems: 'center', gap: '0.5rem',
-              background: 'none', border: 'none', cursor: 'pointer', padding: '0.4rem 0',
-              fontSize: '0.8rem', color: filters.family === f ? '#B8973A' : '#7A7570',
-              transition: 'color 0.15s', fontFamily: 'DM Sans, sans-serif'
-            }}
-          >
-            <span style={{ width: 14, height: 14, border: `1px solid ${filters.family === f ? '#B8973A' : '#252525'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: '0.6rem', color: '#B8973A' }}>
-              {filters.family === f ? '✓' : ''}
-            </span>
-            {f}
-          </button>
-        ))}
-      </div>
+      {available.genders.length > 0 && (
+        <div className="shop-filter-group">
+          <div className="shop-filter-label">GENDER</div>
+          {available.genders.map(g => (
+            <button
+              key={g}
+              onClick={() => setGender(prev => prev === g ? '' : g)}
+              className={`shop-filter-btn ${gender === g ? 'active' : ''}`}
+            >
+              <span className="shop-filter-check">{gender === g ? '✓' : ''}</span>
+              {cap(g)}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Fragrance Family */}
+      {available.families.length > 0 && (
+        <div className="shop-filter-group">
+          <div className="shop-filter-label">FRAGRANCE FAMILY</div>
+          {available.families.map(f => (
+            <button
+              key={f}
+              onClick={() => setFamily(prev => prev === f ? '' : f)}
+              className={`shop-filter-btn ${family === f ? 'active' : ''}`}
+            >
+              <span className="shop-filter-check">{family === f ? '✓' : ''}</span>
+              {f}
+            </button>
+          ))}
+        </div>
+      )}
+
       {/* Concentration */}
-      <div>
-        <div style={{ fontSize: '0.55rem', letterSpacing: '0.22em', color: '#B8973A', marginBottom: '1rem', fontFamily: 'DM Sans, sans-serif' }}>CONCENTRATION</div>
-        {CONCENTRATIONS.map(c => (
-          <button
-            key={c}
-            onClick={() => setFilters(f => ({ ...f, concentration: f.concentration === c ? '' : c }))}
-            style={{
-              display: 'flex', width: '100%', alignItems: 'center', gap: '0.5rem',
-              background: 'none', border: 'none', cursor: 'pointer', padding: '0.4rem 0',
-              fontSize: '0.8rem', color: filters.concentration === c ? '#B8973A' : '#7A7570',
-              transition: 'color 0.15s', fontFamily: 'DM Sans, sans-serif'
-            }}
-          >
-            <span style={{ width: 14, height: 14, border: `1px solid ${filters.concentration === c ? '#B8973A' : '#252525'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: '0.6rem', color: '#B8973A' }}>
-              {filters.concentration === c ? '✓' : ''}
-            </span>
-            {c}
-          </button>
-        ))}
-      </div>
+      {available.concentrations.length > 0 && (
+        <div className="shop-filter-group">
+          <div className="shop-filter-label">CONCENTRATION</div>
+          {available.concentrations.map(c => (
+            <button
+              key={c}
+              onClick={() => setConc(prev => prev === c ? '' : c)}
+              className={`shop-filter-btn ${conc === c ? 'active' : ''}`}
+            >
+              <span className="shop-filter-check">{conc === c ? '✓' : ''}</span>
+              {c}
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   )
 
   return (
-    <div style={{ minHeight: '100vh', background: '#070707', color: '#F0EBE0' }}>
-      {/* Page header */}
-      <div style={{ borderBottom: '1px solid #1c1c1c', paddingTop: '4rem', paddingBottom: '2.5rem' }}>
-        <div className="container">
-          {/* Breadcrumb */}
-          <div style={{ fontSize: '0.625rem', letterSpacing: '0.2em', color: '#7A7570', marginBottom: '1.25rem', fontFamily: 'DM Sans, sans-serif', textTransform: 'uppercase' }}>
-            <Link href="/" style={{ textDecoration: 'none', color: '#7A7570' }} className="breadcrumb-link">HOME</Link>
-            <span style={{ margin: '0 0.5rem', color: '#B8973A' }}>/</span>
-            <span style={{ color: '#B8973A' }}>SHOP</span>
-          </div>
+    <div className="shop-root">
 
-          <h1 style={{ fontFamily: 'Playfair Display, Georgia, serif', fontSize: 'clamp(2rem, 4.5vw, 3.5rem)', color: '#F0EBE0', fontWeight: 400, marginBottom: '0.5rem', lineHeight: 1.1 }}>
-            THE COLLECTION
-          </h1>
-          <p style={{ color: '#7A7570', fontSize: '0.875rem', fontFamily: 'DM Sans, sans-serif' }}>
-            Explore the Capriole fragrance collection.
-          </p>
+      {/* ── Page Header ─────────────────────────────────────────── */}
+      <div className="shop-page-header">
+        <div className="container">
+          <div className="shop-breadcrumb">
+            <Link href="/" className="shop-bc-link">HOME</Link>
+            <span className="shop-bc-sep">/</span>
+            <span className="shop-bc-cur">SHOP</span>
+          </div>
+          <h1 className="shop-heading">THE COLLECTION</h1>
+          <p className="shop-subheading">Explore the Capriole fragrance collection.</p>
         </div>
       </div>
 
-      {/* Category Tabs + Search Bar */}
-      <div style={{ borderBottom: '1px solid #1c1c1c', background: '#0a0a0a' }}>
-        <div className="container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem', paddingTop: '1rem', paddingBottom: '1rem' }}>
-          {/* Tabs */}
-          <div style={{ display: 'flex', gap: '0.5rem', overflowX: 'auto', paddingBottom: '0.25rem', scrollbarWidth: 'none' }} className="category-tabs">
-            {CATEGORY_TABS.map(tab => {
-              const isActive = activeTab === tab.id
+      {/* ── Toolbar: Tabs + Search ───────────────────────────────── */}
+      <div className="shop-toolbar-wrap">
+        <div className="container shop-toolbar">
+          {/* Quick-filter tabs */}
+          <div className="shop-tabs" role="tablist">
+            {[
+              { id: 'all',    label: 'ALL' },
+              ...(available.genders.includes('women')  ? [{ id: 'women',  label: 'WOMEN'  }] : []),
+              ...(available.genders.includes('men')    ? [{ id: 'men',    label: 'MEN'    }] : []),
+              ...(available.genders.includes('unisex') ? [{ id: 'unisex', label: 'UNISEX' }] : []),
+              { id: 'edp',    label: 'EDP' },
+              { id: 'samples',label: 'SAMPLES' },
+            ].map(tab => {
+              const isActive =
+                tab.id === 'all'     ? !gender && !family && !conc && !search :
+                tab.id === 'women'   ? gender === 'women'  :
+                tab.id === 'men'     ? gender === 'men'    :
+                tab.id === 'unisex'  ? gender === 'unisex' :
+                tab.id === 'edp'     ? conc === 'Eau de Parfum' :
+                tab.id === 'samples' ? false : false
               return (
                 <button
                   key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  style={{
-                    background: isActive ? '#B8973A' : 'transparent',
-                    color: isActive ? '#070707' : '#7A7570',
-                    border: `1px solid ${isActive ? '#B8973A' : '#1c1c1c'}`,
-                    padding: '0.4rem 0.875rem',
-                    fontSize: '0.625rem',
-                    letterSpacing: '0.18em',
-                    fontFamily: 'DM Sans, sans-serif',
-                    fontWeight: 500,
-                    cursor: 'pointer',
-                    transition: 'all 0.2s ease',
-                    whiteSpace: 'nowrap',
+                  role="tab"
+                  aria-selected={isActive}
+                  onClick={() => {
+                    clearAll()
+                    if (tab.id === 'women')  setGender('women')
+                    if (tab.id === 'men')    setGender('men')
+                    if (tab.id === 'unisex') setGender('unisex')
+                    if (tab.id === 'edp')    setConc('Eau de Parfum')
                   }}
+                  className={`shop-tab${isActive ? ' active' : ''}`}
                 >
                   {tab.label}
                 </button>
@@ -202,31 +173,19 @@ export default function ShopClient({ products, initialFilters }: ShopClientProps
             })}
           </div>
 
-          {/* Search box */}
-          <div style={{ position: 'relative', width: '100%', maxWidth: 260 }}>
-            <Search size={14} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: '#7A7570' }} />
+          {/* Search */}
+          <div className="shop-search-wrap">
+            <Search size={13} className="shop-search-icon" />
             <input
               type="text"
               placeholder="Search fragrances..."
-              value={searchQuery}
-              onChange={e => setSearchQuery(e.target.value)}
-              style={{
-                width: '100%',
-                background: '#121212',
-                border: '1px solid #1c1c1c',
-                borderRadius: 0,
-                padding: '0.45rem 0.75rem 0.45rem 2.25rem',
-                fontSize: '0.75rem',
-                color: '#F0EBE0',
-                fontFamily: 'DM Sans, sans-serif',
-                outline: 'none',
-              }}
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              className="shop-search-input"
+              aria-label="Search fragrances"
             />
-            {searchQuery && (
-              <button
-                onClick={() => setSearchQuery('')}
-                style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: '#7A7570', cursor: 'pointer', display: 'flex', padding: 2 }}
-              >
+            {search && (
+              <button onClick={() => setSearch('')} className="shop-search-clear" aria-label="Clear search">
                 <X size={12} />
               </button>
             )}
@@ -234,50 +193,57 @@ export default function ShopClient({ products, initialFilters }: ShopClientProps
         </div>
       </div>
 
-      {/* Main Content Area */}
-      <div className="container" style={{ paddingTop: '2.5rem', paddingBottom: '5rem' }}>
-        {/* Mobile filter bar */}
-        <div style={{ display: 'none', borderBottom: '1px solid #1c1c1c', paddingBottom: '1.5rem', marginBottom: '2rem' }} id="mobile-filter-bar">
-          <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-            <button
-              onClick={() => setFilterOpen(true)}
-              style={{
-                display: 'flex', alignItems: 'center', gap: '0.5rem',
-                background: '#121212', border: '1px solid #1c1c1c',
-                color: '#B8973A', padding: '0.625rem 1.25rem',
-                fontSize: '0.625rem', letterSpacing: '0.18em',
-                cursor: 'pointer', fontFamily: 'DM Sans, sans-serif',
-                fontWeight: 500,
-              }}
-            >
-              <SlidersHorizontal size={14} /> FILTER
-            </button>
+      {/* ── Main Area ───────────────────────────────────────────── */}
+      <div className="container shop-body">
+
+        {/* Mobile filter/sort bar (hidden on desktop) */}
+        <div className="shop-mobile-bar">
+          <button
+            onClick={() => setFilterOpen(true)}
+            className="shop-mobile-btn"
+            aria-label="Open filters"
+          >
+            <SlidersHorizontal size={14} />
+            FILTER
+            {hasActiveFilters && <span className="shop-filter-dot" />}
+          </button>
+
+          <div className="shop-sort-wrap">
             <select
               value={sort}
               onChange={e => setSort(e.target.value)}
-              style={{
-                flex: 1, background: '#121212', border: '1px solid #1c1c1c',
-                color: '#F0EBE0', padding: '0.625rem', fontSize: '0.75rem',
-                fontFamily: 'DM Sans, sans-serif', outline: 'none',
-              }}
+              className="shop-sort-select"
+              aria-label="Sort products"
             >
               <option value="featured">Featured</option>
               <option value="newest">Newest</option>
-              <option value="price_asc">Price: Low to High</option>
-              <option value="price_desc">Price: High to Low</option>
+              <option value="price_asc">Price: Low → High</option>
+              <option value="price_desc">Price: High → Low</option>
             </select>
+            <ChevronDown size={12} className="shop-sort-chevron" />
           </div>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '220px 1fr', gap: '3.5rem' }}>
-          {/* Desktop Sidebar */}
-          <aside style={{ position: 'sticky', top: 90, alignSelf: 'flex-start' }} id="desktop-sidebar">
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
-              <div style={{ fontSize: '0.55rem', letterSpacing: '0.22em', color: '#B8973A', fontFamily: 'DM Sans, sans-serif', fontWeight: 500 }}>FILTERS</div>
+        {/* Desktop layout: sidebar + grid */}
+        <div className="shop-layout">
+
+          {/* Desktop sidebar (hidden on mobile) */}
+          <aside className="shop-sidebar" aria-label="Filters">
+            <div className="shop-sidebar-header">
+              <span className="shop-filter-label" style={{ marginBottom: 0 }}>FILTERS</span>
+              {hasActiveFilters && (
+                <button onClick={clearAll} className="shop-clear-btn">CLEAR</button>
+              )}
+            </div>
+
+            {/* Sort — desktop only */}
+            <div className="shop-filter-group">
+              <div className="shop-filter-label">SORT BY</div>
               <select
                 value={sort}
                 onChange={e => setSort(e.target.value)}
-                style={{ background: 'transparent', border: 'none', color: '#7A7570', fontSize: '0.65rem', fontFamily: 'DM Sans, sans-serif', cursor: 'pointer', outline: 'none' }}
+                className="shop-sort-select sidebar-sort"
+                aria-label="Sort products"
               >
                 <option value="featured">Featured</option>
                 <option value="newest">Newest</option>
@@ -285,86 +251,505 @@ export default function ShopClient({ products, initialFilters }: ShopClientProps
                 <option value="price_desc">Price ↓</option>
               </select>
             </div>
-            <FilterContent />
+
+            <FilterPanel />
           </aside>
 
-          {/* Product Grid Area */}
-          <div>
-            {/* Count & Clear All */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
-              <div style={{ fontSize: '0.75rem', color: '#7A7570', fontFamily: 'DM Sans, sans-serif', letterSpacing: '0.05em' }}>
-                {filtered.length} FRAGRANCE{filtered.length !== 1 ? 'S' : ''}
-              </div>
-              {(activeTab !== 'all' || searchQuery || filters.gender || filters.family || filters.concentration) && (
-                <button
-                  onClick={clearAllFilters}
-                  style={{ background: 'none', border: 'none', color: '#B8973A', fontSize: '0.65rem', letterSpacing: '0.15em', fontFamily: 'DM Sans, sans-serif', cursor: 'pointer', textDecoration: 'underline' }}
-                >
-                  CLEAR ALL
-                </button>
+          {/* Product grid */}
+          <div className="shop-grid-area">
+            {/* Count + clear */}
+            <div className="shop-count-row">
+              <span className="shop-count">
+                {filtered.length} {filtered.length === 1 ? 'FRAGRANCE' : 'FRAGRANCES'}
+              </span>
+              {hasActiveFilters && (
+                <button onClick={clearAll} className="shop-clear-btn desktop-only">CLEAR ALL</button>
               )}
             </div>
 
-            {/* Render Grid or Empty Results */}
             {filtered.length > 0 ? (
-              <ProductGrid products={filtered} columns={4} />
+              <ProductGrid products={filtered} columns={cols} />
             ) : (
-              <div style={{ padding: '4rem 1.5rem', textAlign: 'center', background: '#0a0a0a', border: '1px solid #1c1c1c' }}>
-                <h3 style={{ fontFamily: 'Playfair Display, Georgia, serif', fontSize: '1.5rem', color: '#F0EBE0', marginBottom: '0.5rem', fontWeight: 400 }}>
-                  NO FRAGRANCES FOUND
-                </h3>
-                <p style={{ color: '#7A7570', fontSize: '0.875rem', marginBottom: '1.5rem', fontFamily: 'DM Sans, sans-serif' }}>
-                  Try adjusting your filters or search terms.
-                </p>
-                <button
-                  onClick={clearAllFilters}
-                  style={{
-                    background: '#B8973A', color: '#070707', border: 'none',
-                    padding: '0.75rem 2rem', fontSize: '0.625rem',
-                    letterSpacing: '0.18em', fontFamily: 'DM Sans, sans-serif',
-                    fontWeight: 500, cursor: 'pointer'
-                  }}
-                >
-                  CLEAR FILTERS
-                </button>
+              <div className="shop-empty">
+                <h3 className="shop-empty-heading">No fragrances found.</h3>
+                <p className="shop-empty-text">Try adjusting your filters or search.</p>
+                <button onClick={clearAll} className="shop-empty-btn">CLEAR FILTERS</button>
               </div>
             )}
           </div>
         </div>
       </div>
 
-      {/* Mobile Filter Panel */}
+      {/* ── Mobile Filter Drawer ─────────────────────────────────── */}
       {filterOpen && (
         <>
-          <div onClick={() => setFilterOpen(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 80, backdropFilter: 'blur(4px)' }} />
-          <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, background: '#101010', border: '1px solid #1c1c1c', borderBottom: 'none', padding: '2rem 1.5rem 2.5rem', zIndex: 81, maxHeight: '85vh', overflowY: 'auto' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-              <span style={{ fontSize: '0.625rem', letterSpacing: '0.22em', color: '#B8973A', fontFamily: 'DM Sans, sans-serif', fontWeight: 500 }}>FILTER FRAGRANCES</span>
-              <button onClick={() => setFilterOpen(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#7A7570', display: 'flex' }}><X size={18} /></button>
+          <div
+            className="shop-drawer-overlay"
+            onClick={() => setFilterOpen(false)}
+            aria-hidden="true"
+          />
+          <div className="shop-drawer" role="dialog" aria-modal="true" aria-label="Filter fragrances">
+            <div className="shop-drawer-header">
+              <span className="shop-filter-label" style={{ marginBottom: 0 }}>FILTER FRAGRANCES</span>
+              <button
+                onClick={() => setFilterOpen(false)}
+                className="shop-drawer-close"
+                aria-label="Close filters"
+              >
+                <X size={18} />
+              </button>
             </div>
-            <FilterContent />
-            <button
-              onClick={() => setFilterOpen(false)}
-              style={{
-                width: '100%', marginTop: '2rem', background: '#B8973A', border: 'none',
-                color: '#070707', padding: '0.875rem', fontSize: '0.625rem',
-                letterSpacing: '0.18em', fontFamily: 'DM Sans, sans-serif',
-                fontWeight: 500, cursor: 'pointer'
-              }}
-            >
-              APPLY FILTERS
-            </button>
+
+            <div className="shop-drawer-body">
+              {/* Sort in drawer */}
+              <div className="shop-filter-group">
+                <div className="shop-filter-label">SORT BY</div>
+                <select
+                  value={sort}
+                  onChange={e => setSort(e.target.value)}
+                  className="shop-sort-select"
+                  aria-label="Sort products"
+                >
+                  <option value="featured">Featured</option>
+                  <option value="newest">Newest</option>
+                  <option value="price_asc">Price: Low → High</option>
+                  <option value="price_desc">Price: High → Low</option>
+                </select>
+              </div>
+
+              <FilterPanel />
+            </div>
+
+            <div className="shop-drawer-footer">
+              <button onClick={() => setFilterOpen(false)} className="shop-apply-btn">
+                SHOW {filtered.length} {filtered.length === 1 ? 'FRAGRANCE' : 'FRAGRANCES'}
+              </button>
+            </div>
           </div>
         </>
       )}
 
+      {/* ── Styles ──────────────────────────────────────────────── */}
       <style>{`
-        .breadcrumb-link:hover { color: #F0EBE0 !important; }
-        .category-tabs::-webkit-scrollbar { display: none; }
+        /* Root */
+        .shop-root {
+          min-height: 100vh;
+          background: #070707;
+          color: #F0EBE0;
+        }
+
+        /* Page header */
+        .shop-page-header {
+          border-bottom: 1px solid #1c1c1c;
+          padding: 3.5rem 0 2.5rem;
+        }
+        .shop-breadcrumb {
+          font-size: 0.6rem;
+          letter-spacing: 0.2em;
+          color: #7A7570;
+          margin-bottom: 1.25rem;
+          font-family: DM Sans, sans-serif;
+          text-transform: uppercase;
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+        }
+        .shop-bc-link { color: #7A7570; text-decoration: none; transition: color 0.15s; }
+        .shop-bc-link:hover { color: #F0EBE0; }
+        .shop-bc-sep  { color: #B8973A; }
+        .shop-bc-cur  { color: #B8973A; }
+        .shop-heading {
+          font-family: Playfair Display, Georgia, serif;
+          font-size: clamp(2rem, 4.5vw, 3.25rem);
+          color: #F0EBE0;
+          font-weight: 400;
+          margin-bottom: 0.4rem;
+          line-height: 1.1;
+        }
+        .shop-subheading {
+          color: #7A7570;
+          font-size: 0.875rem;
+          font-family: DM Sans, sans-serif;
+          margin: 0;
+        }
+
+        /* Toolbar */
+        .shop-toolbar-wrap {
+          border-bottom: 1px solid #1c1c1c;
+          background: #0a0a0a;
+        }
+        .shop-toolbar {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 1rem;
+          padding-top: 0.875rem;
+          padding-bottom: 0.875rem;
+          flex-wrap: wrap;
+        }
+        .shop-tabs {
+          display: flex;
+          gap: 0.375rem;
+          overflow-x: auto;
+          scrollbar-width: none;
+          flex-shrink: 0;
+        }
+        .shop-tabs::-webkit-scrollbar { display: none; }
+        .shop-tab {
+          background: transparent;
+          color: #7A7570;
+          border: 1px solid #1c1c1c;
+          padding: 0.375rem 0.875rem;
+          font-size: 0.6rem;
+          letter-spacing: 0.18em;
+          font-family: DM Sans, sans-serif;
+          font-weight: 500;
+          cursor: pointer;
+          transition: all 0.18s ease;
+          white-space: nowrap;
+          text-transform: uppercase;
+        }
+        .shop-tab:hover { border-color: #B8973A; color: #B8973A; }
+        .shop-tab.active { background: #B8973A; color: #070707; border-color: #B8973A; }
+
+        /* Search */
+        .shop-search-wrap {
+          position: relative;
+          width: 100%;
+          max-width: 240px;
+          flex-shrink: 0;
+        }
+        .shop-search-icon {
+          position: absolute;
+          left: 10px;
+          top: 50%;
+          transform: translateY(-50%);
+          color: #7A7570;
+          pointer-events: none;
+        }
+        .shop-search-input {
+          width: 100%;
+          background: #111;
+          border: 1px solid #1c1c1c;
+          border-radius: 0;
+          padding: 0.4rem 2rem 0.4rem 2rem;
+          font-size: 0.75rem;
+          color: #F0EBE0;
+          font-family: DM Sans, sans-serif;
+          outline: none;
+          transition: border-color 0.15s;
+        }
+        .shop-search-input:focus { border-color: #B8973A; }
+        .shop-search-input::placeholder { color: #3a3a3a; }
+        .shop-search-clear {
+          position: absolute;
+          right: 8px;
+          top: 50%;
+          transform: translateY(-50%);
+          background: none;
+          border: none;
+          color: #7A7570;
+          cursor: pointer;
+          display: flex;
+          padding: 2px;
+        }
+
+        /* Body layout */
+        .shop-body {
+          padding-top: 2.5rem;
+          padding-bottom: 6rem;
+        }
+
+        /* Mobile bar (hidden ≥ 1024px) */
+        .shop-mobile-bar {
+          display: none;
+          margin-bottom: 2rem;
+          gap: 0.75rem;
+          align-items: center;
+        }
+        .shop-mobile-btn {
+          display: flex;
+          align-items: center;
+          gap: 0.45rem;
+          background: #111;
+          border: 1px solid #1c1c1c;
+          color: #B8973A;
+          padding: 0.625rem 1.125rem;
+          font-size: 0.6rem;
+          letter-spacing: 0.18em;
+          font-family: DM Sans, sans-serif;
+          font-weight: 500;
+          cursor: pointer;
+          white-space: nowrap;
+          position: relative;
+          transition: border-color 0.15s;
+          text-transform: uppercase;
+        }
+        .shop-mobile-btn:hover { border-color: #B8973A; }
+        .shop-filter-dot {
+          width: 6px;
+          height: 6px;
+          border-radius: 50%;
+          background: #B8973A;
+          margin-left: 2px;
+        }
+        .shop-sort-wrap {
+          position: relative;
+          flex: 1;
+        }
+        .shop-sort-chevron {
+          position: absolute;
+          right: 10px;
+          top: 50%;
+          transform: translateY(-50%);
+          color: #7A7570;
+          pointer-events: none;
+        }
+        .shop-sort-select {
+          width: 100%;
+          background: #111;
+          border: 1px solid #1c1c1c;
+          color: #F0EBE0;
+          padding: 0.6rem 2rem 0.6rem 0.75rem;
+          font-size: 0.75rem;
+          font-family: DM Sans, sans-serif;
+          outline: none;
+          -webkit-appearance: none;
+          cursor: pointer;
+          transition: border-color 0.15s;
+          border-radius: 0;
+        }
+        .shop-sort-select:focus { border-color: #B8973A; }
+        .shop-sort-select option { background: #111; }
+
+        /* Desktop layout grid */
+        .shop-layout {
+          display: grid;
+          grid-template-columns: 200px 1fr;
+          gap: 3rem;
+          align-items: start;
+        }
+
+        /* Sidebar */
+        .shop-sidebar {
+          position: sticky;
+          top: 80px;
+        }
+        .shop-sidebar-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 1.75rem;
+          padding-bottom: 1rem;
+          border-bottom: 1px solid #1c1c1c;
+        }
+        .shop-filter-panel {
+          display: flex;
+          flex-direction: column;
+          gap: 1.75rem;
+        }
+        .shop-filter-group {
+          display: flex;
+          flex-direction: column;
+          gap: 0;
+        }
+        .shop-filter-label {
+          font-size: 0.55rem;
+          letter-spacing: 0.22em;
+          color: #B8973A;
+          margin-bottom: 0.875rem;
+          font-family: DM Sans, sans-serif;
+          font-weight: 500;
+          text-transform: uppercase;
+          display: block;
+        }
+        .shop-filter-btn {
+          display: flex;
+          width: 100%;
+          align-items: center;
+          gap: 0.5rem;
+          background: none;
+          border: none;
+          cursor: pointer;
+          padding: 0.35rem 0;
+          font-size: 0.8125rem;
+          color: #7A7570;
+          transition: color 0.15s;
+          font-family: DM Sans, sans-serif;
+          text-align: left;
+        }
+        .shop-filter-btn:hover { color: #F0EBE0; }
+        .shop-filter-btn.active { color: #B8973A; }
+        .shop-filter-check {
+          width: 14px;
+          height: 14px;
+          border: 1px solid #252525;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          flex-shrink: 0;
+          font-size: 0.55rem;
+          color: #B8973A;
+          transition: border-color 0.15s;
+        }
+        .shop-filter-btn.active .shop-filter-check { border-color: #B8973A; }
+        .shop-clear-btn {
+          background: none;
+          border: none;
+          color: #B8973A;
+          font-size: 0.6rem;
+          letter-spacing: 0.15em;
+          font-family: DM Sans, sans-serif;
+          cursor: pointer;
+          text-transform: uppercase;
+          text-decoration: underline;
+          padding: 0;
+          transition: color 0.15s;
+        }
+        .shop-clear-btn:hover { color: #F0EBE0; }
+        .sidebar-sort {
+          background: transparent;
+          border: 1px solid #1c1c1c;
+          padding: 0.4rem 0.6rem;
+          font-size: 0.7rem;
+          width: 100%;
+        }
+
+        /* Product area */
+        .shop-grid-area {}
+        .shop-count-row {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 2rem;
+        }
+        .shop-count {
+          font-size: 0.7rem;
+          color: #7A7570;
+          font-family: DM Sans, sans-serif;
+          letter-spacing: 0.08em;
+        }
+        .desktop-only { display: block; }
+
+        /* Empty state */
+        .shop-empty {
+          padding: 5rem 2rem;
+          text-align: center;
+          border: 1px solid #1c1c1c;
+          background: #0a0a0a;
+        }
+        .shop-empty-heading {
+          font-family: Playfair Display, Georgia, serif;
+          font-size: 1.5rem;
+          color: #F0EBE0;
+          font-weight: 400;
+          margin-bottom: 0.5rem;
+        }
+        .shop-empty-text {
+          color: #7A7570;
+          font-size: 0.875rem;
+          font-family: DM Sans, sans-serif;
+          margin-bottom: 1.5rem;
+        }
+        .shop-empty-btn {
+          background: #B8973A;
+          color: #070707;
+          border: none;
+          padding: 0.75rem 2rem;
+          font-size: 0.6rem;
+          letter-spacing: 0.18em;
+          font-family: DM Sans, sans-serif;
+          font-weight: 500;
+          cursor: pointer;
+          text-transform: uppercase;
+          transition: background 0.2s;
+        }
+        .shop-empty-btn:hover { background: #C9AA5A; }
+
+        /* Drawer */
+        .shop-drawer-overlay {
+          position: fixed;
+          inset: 0;
+          background: rgba(0,0,0,0.72);
+          z-index: 80;
+          backdrop-filter: blur(4px);
+        }
+        .shop-drawer {
+          position: fixed;
+          bottom: 0;
+          left: 0;
+          right: 0;
+          background: #0f0f0f;
+          border-top: 1px solid #1c1c1c;
+          z-index: 81;
+          max-height: 88vh;
+          display: flex;
+          flex-direction: column;
+          border-radius: 0;
+        }
+        .shop-drawer-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 1.375rem 1.5rem;
+          border-bottom: 1px solid #1c1c1c;
+          flex-shrink: 0;
+        }
+        .shop-drawer-close {
+          background: none;
+          border: none;
+          cursor: pointer;
+          color: #7A7570;
+          display: flex;
+          padding: 4px;
+          transition: color 0.15s;
+        }
+        .shop-drawer-close:hover { color: #F0EBE0; }
+        .shop-drawer-body {
+          padding: 1.5rem;
+          overflow-y: auto;
+          flex: 1;
+        }
+        .shop-drawer-footer {
+          padding: 1.25rem 1.5rem;
+          border-top: 1px solid #1c1c1c;
+          flex-shrink: 0;
+        }
+        .shop-apply-btn {
+          width: 100%;
+          background: #B8973A;
+          border: none;
+          color: #070707;
+          padding: 0.9rem;
+          font-size: 0.6rem;
+          letter-spacing: 0.18em;
+          font-family: DM Sans, sans-serif;
+          font-weight: 500;
+          cursor: pointer;
+          text-transform: uppercase;
+          transition: background 0.2s;
+        }
+        .shop-apply-btn:hover { background: #C9AA5A; }
+
+        /* Responsive breakpoints */
         @media (max-width: 1024px) {
-          div[style*="grid-template-columns: 220px 1fr"] { grid-template-columns: 1fr !important; }
-          #desktop-sidebar { display: none !important; }
-          #mobile-filter-bar { display: block !important; }
+          .shop-layout { grid-template-columns: 1fr; }
+          .shop-sidebar { display: none; }
+          .shop-mobile-bar { display: flex; }
+          .desktop-only { display: none !important; }
+        }
+
+        @media (max-width: 768px) {
+          .shop-page-header { padding: 2.5rem 0 2rem; }
+          .shop-toolbar { flex-direction: column; align-items: stretch; }
+          .shop-search-wrap { max-width: 100%; }
+          .shop-tabs { padding-bottom: 0; }
+          .shop-body { padding-top: 1.75rem; padding-bottom: 4rem; }
+          .shop-sort-select { font-size: 0.8125rem; }
+        }
+
+        @media (max-width: 480px) {
+          .shop-mobile-btn { padding: 0.55rem 0.875rem; }
         }
       `}</style>
     </div>
