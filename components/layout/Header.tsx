@@ -148,7 +148,7 @@ export default function Header({ transparent = false }: { transparent?: boolean 
 
             <Link href="/samples" style={{ fontSize: '0.625rem', letterSpacing: '0.22em', color: '#B8B0A3', fontWeight: 400, fontFamily: 'DM Sans, sans-serif', transition: 'color 0.2s', textDecoration: 'none' }} className="nav-link">SAMPLES</Link>
             <Link href="/about" style={{ fontSize: '0.625rem', letterSpacing: '0.22em', color: '#B8B0A3', fontWeight: 400, fontFamily: 'DM Sans, sans-serif', transition: 'color 0.2s', textDecoration: 'none' }} className="nav-link">ABOUT</Link>
-            <Link href="/journal" style={{ fontSize: '0.625rem', letterSpacing: '0.22em', color: '#B8B0A3', fontWeight: 400, fontFamily: 'DM Sans, sans-serif', transition: 'color 0.2s', textDecoration: 'none' }} className="nav-link">JOURNAL</Link>
+            <Link href="/visit" style={{ fontSize: '0.625rem', letterSpacing: '0.22em', color: '#B8B0A3', fontWeight: 400, fontFamily: 'DM Sans, sans-serif', transition: 'color 0.2s', textDecoration: 'none' }} className="nav-link">VISIT</Link>
           </nav>
 
           {/* Right Actions — NO ACCOUNT ICON */}
