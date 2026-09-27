@@ -159,24 +159,49 @@ export async function fetchProductBySlug(slug: string): Promise<Product | null> 
 
 export async function fetchProductsByCollection(slug: string): Promise<Product[]> {
   const all = await fetchAllProducts()
-  const slugLower = slug.toLowerCase()
+  const s = slug.toLowerCase()
 
-  if (slugLower === 'floral') {
-    return all.filter(p => (p.collection || '').toLowerCase().includes('floral') || (p.fragranceFamily || '').toLowerCase().includes('floral'))
+  // Explicit membership — only match what the product's collection field actually says
+  if (s === 'oud') {
+    return all.filter(p => (p.collection || '').toLowerCase() === 'oud')
   }
-  if (slugLower === 'oud') {
-    return all.filter(p => (p.collection || '').toLowerCase().includes('oud') || (p.fragranceFamily || '').toLowerCase().includes('oud') || (p.name || '').toLowerCase().includes('dubai'))
+  if (s === 'floral') {
+    return all.filter(p => (p.collection || '').toLowerCase().includes('floral'))
   }
-  if (slugLower === 'sweet' || slugLower === 'sweet-gourmand') {
-    return all.filter(p => (p.collection || '').toLowerCase().includes('sweet') || (p.fragranceFamily || '').toLowerCase().includes('sweet') || (p.slug || '').includes('scandal'))
+  if (s === 'sweet-gourmand' || s === 'sweet') {
+    return all.filter(p => (p.collection || '').toLowerCase().includes('sweet'))
   }
-  if (slugLower === 'woody') {
-    return all.filter(p => (p.fragranceFamily || '').toLowerCase().includes('woody') || (p.collection || '').toLowerCase().includes('woody') || (p.slug || '').includes('atlas'))
+  if (s === 'woody') {
+    return all.filter(p => (p.collection || '').toLowerCase() === 'woody')
   }
-  if (slugLower === 'musk' || slugLower === 'musk-amber' || slugLower === 'amber') {
-    return all.filter(p => (p.fragranceFamily || '').toLowerCase().includes('amber') || (p.fragranceFamily || '').toLowerCase().includes('musk') || (p.collection || '').toLowerCase().includes('musk'))
+  if (s === 'musk-amber' || s === 'musk' || s === 'amber') {
+    return all.filter(p => (p.collection || '').toLowerCase().includes('musk') || (p.collection || '').toLowerCase().includes('amber'))
+  }
+  if (s === 'fresh-citrus' || s === 'fresh') {
+    return all.filter(p => (p.collection || '').toLowerCase().includes('fresh') || (p.collection || '').toLowerCase().includes('citrus'))
   }
 
-  const filtered = all.filter(p => (p.collection || '').toLowerCase().includes(slugLower) || (p.fragranceFamily || '').toLowerCase().includes(slugLower))
-  return filtered
+  // Fallback: exact collection field match
+  return all.filter(p => (p.collection || '').toLowerCase() === s)
+}
+
+// Returns only collections that have ≥1 product — used by /collections landing
+export async function fetchCollectionsWithProducts(): Promise<
+  Array<{ slug: string; name: string; count: number }>
+> {
+  const DEFINED = [
+    { slug: 'oud',           name: 'Oud' },
+    { slug: 'floral',        name: 'Floral' },
+    { slug: 'musk-amber',    name: 'Musk & Amber' },
+    { slug: 'woody',         name: 'Woody' },
+    { slug: 'sweet-gourmand',name: 'Sweet' },
+    { slug: 'fresh-citrus',  name: 'Fresh & Citrus' },
+  ]
+  const results = await Promise.all(
+    DEFINED.map(async c => ({
+      ...c,
+      count: (await fetchProductsByCollection(c.slug)).length,
+    }))
+  )
+  return results.filter(c => c.count > 0)
 }
