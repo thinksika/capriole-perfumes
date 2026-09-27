@@ -178,5 +178,5 @@ export async function fetchProductsByCollection(slug: string): Promise<Product[]
   }
 
   const filtered = all.filter(p => (p.collection || '').toLowerCase().includes(slugLower) || (p.fragranceFamily || '').toLowerCase().includes(slugLower))
-  return filtered.length > 0 ? filtered : all
+  return filtered
 }

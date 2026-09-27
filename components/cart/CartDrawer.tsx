@@ -12,7 +12,8 @@ function buildQuickWhatsApp(items: ReturnType<typeof useCartStore.getState>['ite
     `${i.quantity} × ${i.name} — ${formatPrice((i.discountedPrice ?? i.price) * i.quantity, 'GHS')}`
   ).join('\n')
   const total = formatPrice(subtotal, 'GHS')
-  const msg = `CAPRIOLE PERFUMES\nQUICK ORDER\n\n${lines}\n\nSubtotal: ${total}\n\nPlease confirm my order and delivery details.`
+  const orderNum = `CP-${Math.floor(1000 + Math.random() * 9000)}`
+  const msg = `CAPRIOLE PERFUMES\nORDER REQUEST\n\nOrder: #${orderNum}\n\nItems:\n${lines}\n\nTotal: ${total}\n\nPlease confirm my order and delivery details.`
   return `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(msg)}`
 }
 
