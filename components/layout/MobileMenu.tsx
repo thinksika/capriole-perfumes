@@ -1,6 +1,7 @@
 'use client'
 import { useEffect } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import { X } from 'lucide-react'
 
@@ -23,7 +24,7 @@ const navItems = [
 export default function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
   const pathname = usePathname()
 
-  // Handle body overflow lock
+  // Handle body overflow lock safely
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden'
@@ -73,24 +74,27 @@ export default function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
           zIndex: 89,
           display: 'flex',
           flexDirection: 'column',
-          padding: '2rem 1.5rem',
+          padding: '1.75rem 1.25rem',
           overflowY: 'auto',
+          maxWidth: '100vw',
+          width: '100%',
+          boxSizing: 'border-box',
         }}
         role="dialog"
         aria-modal="true"
         aria-label="Navigation menu"
       >
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2.5rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-            <div style={{
-              width: 36, height: 36, border: '1px solid #B8973A',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-            }}>
-              <span style={{ fontFamily: 'Playfair Display, Georgia, serif', fontSize: '1.1rem', color: '#B8973A' }}>C</span>
-            </div>
-            <span style={{ fontFamily: 'Playfair Display, Georgia, serif', fontSize: '0.95rem', letterSpacing: '0.18em', color: '#F0EBE0' }}>CAPRIOLE</span>
-          </div>
-          <button onClick={handleLinkClick} style={{ background: 'none', border: 'none', color: '#7A7570', cursor: 'pointer', display: 'flex', padding: 4 }} aria-label="Close menu">
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+          <Link href="/" onClick={handleLinkClick} style={{ textDecoration: 'none' }}>
+            <Image
+              src="/images/capriole-logo.jpg"
+              alt="CAPRIOLE Perfumes & Fragrances"
+              width={140}
+              height={40}
+              style={{ objectFit: 'contain', height: 32, width: 'auto' }}
+            />
+          </Link>
+          <button onClick={handleLinkClick} style={{ background: 'none', border: 'none', color: '#7A7570', cursor: 'pointer', display: 'flex', padding: 6 }} aria-label="Close menu">
             <X size={22} />
           </button>
         </div>
@@ -104,7 +108,7 @@ export default function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
               style={{
                 display: 'block',
                 fontFamily: 'Playfair Display, Georgia, serif',
-                fontSize: 'clamp(1.35rem, 5vw, 1.75rem)',
+                fontSize: 'clamp(1.2rem, 5vw, 1.6rem)',
                 fontWeight: 400,
                 color: '#B8B0A3',
                 padding: '0.75rem 0',

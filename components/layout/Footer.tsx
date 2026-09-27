@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import Image from 'next/image'
 
 const shopLinks = [
   { label: 'All Fragrances', href: '/shop' },
@@ -39,15 +40,15 @@ export default function Footer() {
         <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr 1fr 1fr', gap: '3rem', marginBottom: '4rem' }}>
           {/* Brand */}
           <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.25rem' }}>
-              <div style={{ width: 42, height: 42, border: '1px solid #B8973A', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <span style={{ fontFamily: 'Playfair Display, Georgia, serif', fontSize: '1.35rem', color: '#B8973A', fontWeight: 400 }}>C</span>
-              </div>
-              <div>
-                <div style={{ fontFamily: 'Playfair Display, Georgia, serif', fontSize: '1.05rem', color: '#F0EBE0', letterSpacing: '0.15em', fontWeight: 400 }}>CAPRIOLE</div>
-                <div style={{ fontSize: '0.42rem', letterSpacing: '0.22em', color: '#7A7570', marginTop: 3, fontFamily: 'DM Sans, sans-serif' }}>PERFUMES &amp; FRAGRANCES</div>
-              </div>
-            </div>
+            <Link href="/" style={{ display: 'inline-block', marginBottom: '1.25rem', textDecoration: 'none' }}>
+              <Image
+                src="/images/capriole-logo.jpg"
+                alt="CAPRIOLE Perfumes & Fragrances"
+                width={170}
+                height={50}
+                style={{ objectFit: 'contain', height: 44, width: 'auto' }}
+              />
+            </Link>
             <p style={{ fontSize: '0.8125rem', color: '#7A7570', lineHeight: 1.7, maxWidth: 240, fontFamily: 'DM Sans, sans-serif' }}>
               THE ART OF LEAVING AN IMPRESSION.
             </p>

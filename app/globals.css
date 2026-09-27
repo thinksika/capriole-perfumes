@@ -27,7 +27,10 @@
   padding: 0;
 }
 
-html {
+html, body {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
   font-size: 16px;
   scroll-behavior: smooth;
   -webkit-text-size-adjust: 100%;
@@ -408,7 +411,7 @@ input::placeholder, textarea::placeholder {
   top: 0;
   right: 0;
   bottom: 0;
-  width: 420px;
+  width: min(100vw, 420px);
   background: var(--bg-2);
   border-left: 1px solid var(--border);
   z-index: 60;
@@ -420,7 +423,7 @@ input::placeholder, textarea::placeholder {
   transform: translateX(0);
 }
 @media (max-width: 480px) {
-  .drawer { width: 100%; }
+  .drawer { width: 100vw; }
 }
 
 /* FILTER */

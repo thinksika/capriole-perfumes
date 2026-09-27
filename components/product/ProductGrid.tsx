@@ -62,6 +62,11 @@ export default function ProductGrid({ products, loading, onQuickView, columns = 
             gap: 1rem !important;
           }
         }
+        @media (max-width: 360px) {
+          div[style*="grid-template-columns"] {
+            grid-template-columns: 1fr !important;
+          }
+        }
       `}</style>
     </div>
   )

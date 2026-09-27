@@ -170,10 +170,10 @@ export default async function HomePage() {
                 sizes="(max-width: 768px) 100vw, 50vw"
               />
               <div style={{
-                position: 'absolute', bottom: '1.5rem', right: '-1.5rem',
+                position: 'absolute', bottom: '1rem', right: '1rem',
                 background: '#070707',
                 border: '1px solid #1c1c1c',
-                padding: '1.25rem 1.5rem',
+                padding: '1rem 1.25rem',
                 zIndex: 1,
               }}>
                 <div style={{ fontSize: '0.45rem', letterSpacing: '0.2em', color: '#7A7570', marginBottom: '0.25rem', fontFamily: 'DM Sans, sans-serif' }}>COLLECTIONS</div>

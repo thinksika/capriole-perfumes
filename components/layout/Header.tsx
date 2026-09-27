@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import { Search, ShoppingBag, Menu } from 'lucide-react'
 import { useCartStore } from '@/lib/cart/cartStore'
@@ -81,27 +82,24 @@ export default function Header({ transparent = false }: { transparent?: boolean 
         <div
           className="container"
           style={{
-            display: 'grid',
-            gridTemplateColumns: 'auto 1fr auto',
+            display: 'flex',
             alignItems: 'center',
+            justifyContent: 'space-between',
             height: 64,
-            gap: '1.5rem',
+            gap: '1rem',
           }}
         >
-          {/* Logo (Left) */}
-          <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', textDecoration: 'none', flexShrink: 0 }}>
-            <div style={{
-              width: 36, height: 36,
-              border: '1px solid #B8973A',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              flexShrink: 0,
-            }}>
-              <span style={{ fontFamily: 'Playfair Display, Georgia, serif', fontSize: '1.15rem', color: '#B8973A', fontWeight: 400 }}>C</span>
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1 }}>
-              <span style={{ fontFamily: 'Playfair Display, Georgia, serif', fontSize: '0.95rem', color: '#F0EBE0', letterSpacing: '0.18em', fontWeight: 400 }}>CAPRIOLE</span>
-              <span style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '0.42rem', letterSpacing: '0.22em', color: '#7A7570', marginTop: 3 }}>PERFUMES &amp; FRAGRANCES</span>
-            </div>
+          {/* Official Capriole Logo (Left) */}
+          <Link href="/" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none', flexShrink: 0 }}>
+            <Image
+              src="/images/capriole-logo.jpg"
+              alt="CAPRIOLE Perfumes & Fragrances"
+              width={160}
+              height={48}
+              style={{ objectFit: 'contain', height: 38, width: 'auto', maxHeight: 38 }}
+              priority
+              className="capriole-logo-img"
+            />
           </Link>
 
           {/* Desktop Nav (Center) */}
@@ -154,14 +152,14 @@ export default function Header({ transparent = false }: { transparent?: boolean 
           </nav>
 
           {/* Right Actions — NO ACCOUNT ICON */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1.15rem', justifyContent: 'flex-end' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', justifyContent: 'flex-end', flexShrink: 0 }}>
             <button
               onClick={() => setSearchOpen(true)}
               style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#B8B0A3', display: 'flex', alignItems: 'center', transition: 'color 0.2s', padding: 4 }}
               aria-label="Search fragrances"
               className="icon-btn"
             >
-              <Search size={17} />
+              <Search size={18} />
             </button>
             <button
               onClick={() => openCart()}
@@ -169,7 +167,7 @@ export default function Header({ transparent = false }: { transparent?: boolean 
               aria-label={`Shopping bag${count > 0 ? `, ${count} item${count !== 1 ? 's' : ''}` : ''}`}
               className="icon-btn"
             >
-              <ShoppingBag size={17} />
+              <ShoppingBag size={18} />
               {count > 0 && (
                 <span style={{
                   position: 'absolute', top: -4, right: -4,
@@ -187,16 +185,19 @@ export default function Header({ transparent = false }: { transparent?: boolean 
               aria-label="Open navigation menu"
               id="mobile-menu-btn"
             >
-              <Menu size={20} />
+              <Menu size={22} />
             </button>
           </div>
         </div>
 
         <style>{`
           @media (max-width: 1024px) {
-            .container { grid-template-columns: auto auto !important; }
             .desktop-nav { display: none !important; }
             #mobile-menu-btn { display: flex !important; }
+            .capriole-logo-img { height: 32px !important; }
+          }
+          @media (max-width: 360px) {
+            .capriole-logo-img { height: 28px !important; }
           }
           .nav-top-btn {
             font-size: 0.625rem;
