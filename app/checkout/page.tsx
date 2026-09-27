@@ -301,7 +301,8 @@ export default function CheckoutPage() {
         .co-root {
           background: #070707;
           min-height: 100vh;
-          padding: 2.5rem 0 6rem;
+          /* push below fixed 64px header */
+          padding: calc(64px + 2rem) 0 6rem;
         }
         .co-container { max-width: 1100px; }
 

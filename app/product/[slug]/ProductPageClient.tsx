@@ -1,5 +1,5 @@
 'use client'
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
@@ -28,7 +28,10 @@ export default function ProductPageClient({ product, related, waNumber }: Props)
   const [activeImg, setActiveImg] = useState(0)
   const [wishlist, setWishlist] = useState(false)
   const [addedToBag, setAddedToBag] = useState(false)
-  const { addItem } = useCartStore()
+  const { addItem, closeCart } = useCartStore()
+
+  // Close cart drawer if open when landing on a product page
+  useEffect(() => { closeCart() }, [closeCart])
 
   const parsedImages = parseImages(product.images)
   const images = parsedImages.length > 0 ? parsedImages : [getProductImage(product)]
@@ -277,7 +280,8 @@ export default function ProductPageClient({ product, related, waNumber }: Props)
         .pp-root {
           background: #070707;
           min-height: 100vh;
-          padding: 2.5rem 0 6rem;
+          /* push below fixed 64px header */
+          padding: calc(64px + 1.5rem) 0 6rem;
         }
 
         /* Back */
