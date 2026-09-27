@@ -10,15 +10,11 @@ export const metadata: Metadata = {
   description: 'Luxury French & Arabian fragrances for moments worth remembering. Explore the Capriole collection in Accra, Ghana.',
 }
 
+import { fetchAllProducts } from '@/lib/products/catalog'
+
 async function getFeaturedProducts() {
-  try {
-    return await prisma.product.findMany({
-      where: { published: true, featured: true },
-      include: { discounts: { include: { discount: true } } },
-      take: 3,
-      orderBy: { createdAt: 'desc' },
-    })
-  } catch { return [] }
+  const all = await fetchAllProducts()
+  return all.filter(p => p.featured).slice(0, 3)
 }
 
 export default async function HomePage() {

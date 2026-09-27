@@ -1,30 +1,11 @@
 import { NextResponse } from 'next/server'
 import prisma from '@/lib/prisma/db'
 
+import { fetchAllProducts } from '@/lib/products/catalog'
+
 export async function GET(request: Request) {
   try {
-    const { searchParams } = new URL(request.url)
-    const gender = searchParams.get('gender')
-    const family = searchParams.get('family')
-    const featured = searchParams.get('featured')
-    const newArrival = searchParams.get('newArrival')
-    const bestSeller = searchParams.get('bestSeller')
-    const limit = parseInt(searchParams.get('limit') || '50')
-
-    const where: Record<string, unknown> = { published: true }
-    if (gender) where.gender = gender
-    if (family) where.fragranceFamily = { contains: family }
-    if (featured === 'true') where.featured = true
-    if (newArrival === 'true') where.newArrival = true
-    if (bestSeller === 'true') where.bestSeller = true
-
-    const products = await prisma.product.findMany({
-      where,
-      include: { discounts: { include: { discount: true } } },
-      take: limit,
-      orderBy: [{ featured: 'desc' }, { createdAt: 'desc' }],
-    })
-
+    const products = await fetchAllProducts()
     return NextResponse.json({ products })
   } catch (error) {
     console.error('Products fetch error:', error)

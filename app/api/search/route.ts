@@ -1,34 +1,16 @@
 import { NextResponse } from 'next/server'
-import prisma from '@/lib/prisma/db'
+import { fetchAllProducts } from '@/lib/products/catalog'
+import { searchProducts } from '@/lib/search/searchProducts'
 
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url)
-    const q = searchParams.get('q')?.toLowerCase().trim() || ''
+    const q = searchParams.get('q')?.trim() || ''
 
     if (!q) return NextResponse.json({ products: [] })
 
-    const products = await prisma.product.findMany({
-      where: {
-        published: true,
-        OR: [
-          { name: { contains: q } },
-          { fragranceFamily: { contains: q } },
-          { description: { contains: q } },
-          { shortDescription: { contains: q } },
-          { topNotes: { contains: q } },
-          { heartNotes: { contains: q } },
-          { baseNotes: { contains: q } },
-          { mainAccords: { contains: q } },
-          { character: { contains: q } },
-          { bestFor: { contains: q } },
-          { collection: { contains: q } },
-          { gender: { contains: q } },
-        ],
-      },
-      include: { discounts: { include: { discount: true } } },
-      take: 20,
-    })
+    const all = await fetchAllProducts()
+    const products = searchProducts(all, { query: q })
 
     return NextResponse.json({ products })
   } catch (error) {

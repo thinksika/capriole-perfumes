@@ -1,6 +1,6 @@
 import { Metadata } from 'next'
 import ShopClient from '../ShopClient'
-import prisma from '@/lib/prisma/db'
+import { fetchAllProducts } from '@/lib/products/catalog'
 
 type Props = { params: Promise<{ category: string }> }
 
@@ -13,21 +13,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
 }
 
-async function getAllProducts() {
-  try {
-    return await prisma.product.findMany({
-      where: { published: true },
-      include: { discounts: { include: { discount: true } } },
-      orderBy: [{ featured: 'desc' }, { createdAt: 'desc' }],
-    })
-  } catch {
-    return []
-  }
-}
-
 export default async function ShopCategoryPage({ params }: Props) {
   const { category } = await params
-  const products = await getAllProducts()
+  const products = await fetchAllProducts()
 
   const initialFilters: Record<string, string> = {}
   const catLower = category.toLowerCase()
@@ -40,5 +28,5 @@ export default async function ShopCategoryPage({ params }: Props) {
     initialFilters.concentration = 'Eau de Parfum'
   }
 
-  return <ShopClient products={products as any} initialFilters={initialFilters} />
+  return <ShopClient products={products} initialFilters={initialFilters} />
 }
