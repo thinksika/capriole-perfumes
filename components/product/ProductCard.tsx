@@ -43,7 +43,7 @@ export default function ProductCard({ product, onQuickView }: ProductCardProps) 
 
   return (
     <article style={{ position: 'relative', display: 'flex', flexDirection: 'column' }}>
-      <Link href={`/product/${product.slug}`} style={{ display: 'block', flex: 1 }}>
+      <Link href={`/product/${product.slug}`} style={{ display: 'block', flex: 1, textDecoration: 'none' }}>
         {/* Image */}
         <div
           className="product-image-wrap"
@@ -66,19 +66,19 @@ export default function ProductCard({ product, onQuickView }: ProductCardProps) 
 
           {/* Wishlist */}
           <button
-            onClick={(e) => { e.preventDefault(); setIsWishlisted(!isWishlisted) }}
+            onClick={(e) => { e.preventDefault(); e.stopPropagation(); setIsWishlisted(!isWishlisted) }}
             style={{
               position: 'absolute', top: '0.75rem', right: '0.75rem',
               background: 'rgba(7,7,7,0.7)', border: '1px solid #1c1c1c',
               width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center',
-              cursor: 'pointer', transition: 'all 0.2s',
+              cursor: 'pointer', transition: 'all 0.2s', zIndex: 5,
             }}
             aria-label={isWishlisted ? 'Remove from wishlist' : 'Add to wishlist'}
           >
             <Heart size={14} fill={isWishlisted ? '#B8973A' : 'none'} color={isWishlisted ? '#B8973A' : '#7A7570'} />
           </button>
 
-          {/* Hover overlay */}
+          {/* Hover overlay for desktop */}
           {inStock && (
             <div className="product-hover-overlay" style={{
               position: 'absolute', bottom: 0, left: 0, right: 0,
@@ -89,10 +89,11 @@ export default function ProductCard({ product, onQuickView }: ProductCardProps) 
               gap: '0.5rem',
               transform: 'translateY(100%)',
               transition: 'transform 0.3s ease',
+              zIndex: 6,
             }}>
               {onQuickView && (
                 <button
-                  onClick={(e) => { e.preventDefault(); onQuickView(product) }}
+                  onClick={(e) => { e.preventDefault(); e.stopPropagation(); onQuickView(product) }}
                   style={{
                     background: 'transparent', border: '1px solid #252525',
                     color: '#B8B0A3', fontSize: '0.625rem', letterSpacing: '0.18em',
@@ -153,6 +154,24 @@ export default function ProductCard({ product, onQuickView }: ProductCardProps) 
         </div>
       </Link>
 
+      {/* Mobile touch ADD TO BAG button */}
+      {inStock && (
+        <button
+          onClick={handleAddToBag}
+          style={{
+            width: '100%',
+            background: '#B8973A', border: 'none', color: '#070707',
+            fontSize: '0.625rem', letterSpacing: '0.15em',
+            fontFamily: 'DM Sans, sans-serif', padding: '0.55rem',
+            cursor: 'pointer', transition: 'background 0.2s', fontWeight: 500,
+            textTransform: 'uppercase', marginTop: '0.25rem'
+          }}
+          className="mobile-add-btn"
+        >
+          {addedToBag ? 'ADDED TO BAG ✓' : 'ADD TO BAG'}
+        </button>
+      )}
+
       <style>{`
         article:hover .product-hover-overlay {
           transform: translateY(0) !important;
@@ -160,6 +179,17 @@ export default function ProductCard({ product, onQuickView }: ProductCardProps) 
         .quick-view-btn:hover {
           border-color: #B8973A !important;
           color: #B8973A !important;
+        }
+        .mobile-add-btn {
+          display: none;
+        }
+        @media (max-width: 768px) {
+          .mobile-add-btn {
+            display: block !important;
+          }
+          .product-hover-overlay {
+            display: none !important;
+          }
         }
       `}</style>
     </article>
