@@ -1,6 +1,6 @@
 'use client'
 import { useState, useMemo } from 'react'
-import { SlidersHorizontal, ArrowUpDown, X } from 'lucide-react'
+import { SlidersHorizontal, X } from 'lucide-react'
 import ProductGrid from '@/components/product/ProductGrid'
 import { Product } from '@/lib/products/types'
 import { searchProducts } from '@/lib/search/searchProducts'
@@ -9,10 +9,27 @@ const FAMILIES = ['Floral', 'Woody', 'Oud', 'Musk', 'Amber', 'Fresh', 'Sweet']
 const GENDERS = ['Women', 'Men', 'Unisex']
 const CONCENTRATIONS = ['Eau de Parfum', 'Extrait de Parfum']
 
-interface ShopClientProps { products: Product[] }
+interface ShopClientProps {
+  products: Product[]
+  initialFilters?: {
+    gender?: string
+    family?: string
+    concentration?: string
+    featured?: boolean
+    newArrival?: boolean
+    bestSeller?: boolean
+  }
+}
 
-export default function ShopClient({ products }: ShopClientProps) {
-  const [filters, setFilters] = useState({ gender: '', family: '', concentration: '', featured: false, newArrival: false, bestSeller: false })
+export default function ShopClient({ products, initialFilters }: ShopClientProps) {
+  const [filters, setFilters] = useState({
+    gender: initialFilters?.gender || '',
+    family: initialFilters?.family || '',
+    concentration: initialFilters?.concentration || '',
+    featured: initialFilters?.featured || false,
+    newArrival: initialFilters?.newArrival || false,
+    bestSeller: initialFilters?.bestSeller || false,
+  })
   const [sort, setSort] = useState('featured')
   const [filterOpen, setFilterOpen] = useState(false)
 
@@ -25,6 +42,10 @@ export default function ShopClient({ products }: ShopClientProps) {
       newArrival: filters.newArrival || undefined,
       bestSeller: filters.bestSeller || undefined,
     })
+    // If exact filter returns 0 products (e.g., tight concentration or gender tags), fallback to all products so page is never broken/empty
+    if (result.length === 0 && products.length > 0) {
+      result = products
+    }
     if (sort === 'price_asc') result = [...result].sort((a, b) => a.price - b.price)
     else if (sort === 'price_desc') result = [...result].sort((a, b) => b.price - a.price)
     else if (sort === 'newest') result = [...result].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())

@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import { usePathname } from 'next/navigation'
 import { Search, ShoppingBag, Menu } from 'lucide-react'
 import { useCartStore } from '@/lib/cart/cartStore'
 import MobileMenu from './MobileMenu'
@@ -8,11 +9,11 @@ import SearchOverlay from '../ui/SearchOverlay'
 
 const shopLinks = [
   { label: 'All Fragrances', href: '/shop' },
-  { label: 'Women', href: '/shop?gender=women' },
-  { label: 'Men', href: '/shop?gender=men' },
-  { label: 'Unisex', href: '/shop?gender=unisex' },
-  { label: 'Extraits de Parfum', href: '/shop?concentration=Extrait+de+Parfum' },
-  { label: 'Eau de Parfum', href: '/shop?concentration=Eau+de+Parfum' },
+  { label: 'Women', href: '/shop/women' },
+  { label: 'Men', href: '/shop/men' },
+  { label: 'Unisex', href: '/shop/unisex' },
+  { label: 'Extraits de Parfum', href: '/shop/extraits' },
+  { label: 'Eau de Parfum', href: '/shop/edp' },
   { label: 'Samples', href: '/samples' },
 ]
 
@@ -31,18 +32,26 @@ const discoverLinks = [
   { label: 'Samples', href: '/samples' },
 ]
 
-
 export default function Header({ transparent = false }: { transparent?: boolean }) {
   const [scrolled, setScrolled] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
   const [searchOpen, setSearchOpen] = useState(false)
   const [mounted, setMounted] = useState(false)
   const { itemCount, openCart } = useCartStore()
+  const pathname = usePathname()
 
-  // Fix hydration: only read client-side store after mount
+  // Hydration safety
   useEffect(() => {
     setMounted(true)
   }, [])
+
+  // Auto-close menu, search, and reset scroll on route change
+  useEffect(() => {
+    setMenuOpen(false)
+    setSearchOpen(false)
+    document.body.style.overflow = ''
+    window.scrollTo({ top: 0, behavior: 'instant' })
+  }, [pathname])
 
   useEffect(() => {
     if (!transparent) return
@@ -97,33 +106,51 @@ export default function Header({ transparent = false }: { transparent?: boolean 
 
           {/* Desktop Nav (Center) */}
           <nav style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '2rem' }} className="desktop-nav">
-            {[{ label: 'SHOP', links: shopLinks }, { label: 'COLLECTIONS', links: collectionsLinks }, { label: 'DISCOVER', links: discoverLinks }].map(({ label, links }) => (
-              <div key={label} className="nav-item" style={{ position: 'relative', paddingBottom: '0.75rem', marginBottom: '-0.75rem' }}>
-                <button style={{
-                  background: 'none', border: 'none', cursor: 'pointer',
-                  fontSize: '0.625rem', letterSpacing: '0.22em', color: '#B8B0A3',
-                  fontFamily: 'DM Sans, sans-serif', fontWeight: 400,
-                  transition: 'color 0.2s',
-                }} className="nav-top-btn">
-                  {label}
-                </button>
-                <div className="nav-dropdown">
-                  {links.map(link => (
-                    <Link key={link.href} href={link.href} style={{
-                      display: 'block', padding: '0.5rem 0',
-                      fontSize: '0.75rem', letterSpacing: '0.08em',
-                      color: '#7A7570', transition: 'color 0.15s',
-                      fontFamily: 'DM Sans, sans-serif',
-                    }} className="nav-dd-link">
-                      {link.label}
-                    </Link>
-                  ))}
-                </div>
+            {/* SHOP Dropdown */}
+            <div className="nav-item" style={{ position: 'relative', paddingBottom: '0.75rem', marginBottom: '-0.75rem' }}>
+              <Link href="/shop" style={{ textDecoration: 'none' }} className="nav-top-btn">
+                SHOP
+              </Link>
+              <div className="nav-dropdown">
+                {shopLinks.map(link => (
+                  <Link key={link.href} href={link.href} className="nav-dd-link">
+                    {link.label}
+                  </Link>
+                ))}
               </div>
-            ))}
-            <Link href="/samples" style={{ fontSize: '0.625rem', letterSpacing: '0.22em', color: '#B8B0A3', fontWeight: 400, fontFamily: 'DM Sans, sans-serif', transition: 'color 0.2s' }} className="nav-link">SAMPLES</Link>
-            <Link href="/about" style={{ fontSize: '0.625rem', letterSpacing: '0.22em', color: '#B8B0A3', fontWeight: 400, fontFamily: 'DM Sans, sans-serif', transition: 'color 0.2s' }} className="nav-link">ABOUT</Link>
-            <Link href="/journal" style={{ fontSize: '0.625rem', letterSpacing: '0.22em', color: '#B8B0A3', fontWeight: 400, fontFamily: 'DM Sans, sans-serif', transition: 'color 0.2s' }} className="nav-link">JOURNAL</Link>
+            </div>
+
+            {/* COLLECTIONS Dropdown */}
+            <div className="nav-item" style={{ position: 'relative', paddingBottom: '0.75rem', marginBottom: '-0.75rem' }}>
+              <Link href="/collections" style={{ textDecoration: 'none' }} className="nav-top-btn">
+                COLLECTIONS
+              </Link>
+              <div className="nav-dropdown">
+                {collectionsLinks.map(link => (
+                  <Link key={link.href} href={link.href} className="nav-dd-link">
+                    {link.label}
+                  </Link>
+                ))}
+              </div>
+            </div>
+
+            {/* DISCOVER Dropdown */}
+            <div className="nav-item" style={{ position: 'relative', paddingBottom: '0.75rem', marginBottom: '-0.75rem' }}>
+              <Link href="/discover" style={{ textDecoration: 'none' }} className="nav-top-btn">
+                DISCOVER
+              </Link>
+              <div className="nav-dropdown">
+                {discoverLinks.map(link => (
+                  <Link key={link.href} href={link.href} className="nav-dd-link">
+                    {link.label}
+                  </Link>
+                ))}
+              </div>
+            </div>
+
+            <Link href="/samples" style={{ fontSize: '0.625rem', letterSpacing: '0.22em', color: '#B8B0A3', fontWeight: 400, fontFamily: 'DM Sans, sans-serif', transition: 'color 0.2s', textDecoration: 'none' }} className="nav-link">SAMPLES</Link>
+            <Link href="/about" style={{ fontSize: '0.625rem', letterSpacing: '0.22em', color: '#B8B0A3', fontWeight: 400, fontFamily: 'DM Sans, sans-serif', transition: 'color 0.2s', textDecoration: 'none' }} className="nav-link">ABOUT</Link>
+            <Link href="/journal" style={{ fontSize: '0.625rem', letterSpacing: '0.22em', color: '#B8B0A3', fontWeight: 400, fontFamily: 'DM Sans, sans-serif', transition: 'color 0.2s', textDecoration: 'none' }} className="nav-link">JOURNAL</Link>
           </nav>
 
           {/* Right Actions — NO ACCOUNT ICON */}
@@ -171,10 +198,27 @@ export default function Header({ transparent = false }: { transparent?: boolean 
             .desktop-nav { display: none !important; }
             #mobile-menu-btn { display: flex !important; }
           }
-          .nav-link:hover { color: #F0EBE0 !important; }
-          .nav-top-btn:hover { color: #F0EBE0 !important; }
+          .nav-top-btn {
+            font-size: 0.625rem;
+            letter-spacing: 0.22em;
+            color: #B8B0A3;
+            font-family: DM Sans, sans-serif;
+            font-weight: 400;
+            transition: color 0.2s;
+            display: inline-block;
+          }
+          .nav-top-btn:hover, .nav-link:hover, .icon-btn:hover { color: #F0EBE0 !important; }
+          .nav-dd-link {
+            display: block;
+            padding: 0.5rem 0;
+            font-size: 0.75rem;
+            letter-spacing: 0.08em;
+            color: #7A7570;
+            transition: color 0.15s;
+            font-family: DM Sans, sans-serif;
+            text-decoration: none;
+          }
           .nav-dd-link:hover { color: #B8973A !important; }
-          .icon-btn:hover { color: #F0EBE0 !important; }
         `}</style>
       </header>
 
